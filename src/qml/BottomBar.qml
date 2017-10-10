@@ -35,6 +35,7 @@ Item {
 
             text: "TRAFFIC"
             checked: true
+            visible: !window.navigating
         }
 
         AirFlow {

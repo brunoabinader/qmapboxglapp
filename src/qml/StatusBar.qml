@@ -33,10 +33,7 @@ Item {
     }
 
     Row {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width / 4
-        spacing: 10
+        anchors.centerIn: parent
 
         DateAndTime {}
     }

@@ -9,14 +9,13 @@ Item {
 
     // Km/h
     property var carSpeed: 35
-    property var navigating: true
     property var traffic: true
     property var night: true
 
     states: [
         State {
-            name: ""
-            PropertyChanges { target: map; tilt: 0; bearing: 0; zoomLevel: map.zoomLevel }
+            name: "overview"
+            PropertyChanges { target: map; tilt: 0; bearing: 90; zoomLevel: 20 }
         },
         State {
             name: "navigating"
@@ -27,21 +26,13 @@ Item {
     transitions: [
         Transition {
             to: "*"
-            RotationAnimation { target: map; property: "bearing"; duration: 100; direction: RotationAnimation.Shortest }
-            NumberAnimation { target: map; property: "zoomLevel"; duration: 100 }
-            NumberAnimation { target: map; property: "tilt"; duration: 100 }
+            RotationAnimation { target: map; property: "bearing"; duration: 300; direction: RotationAnimation.Shortest }
+            NumberAnimation { target: map; property: "zoomLevel"; duration: 300 }
+            NumberAnimation { target: map; property: "tilt"; duration: 300 }
         }
     ]
 
-    state: navigating ? "navigating" : ""
-
-    Image {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        z: 2
-
-        source: "qrc:map-overlay-edge-gradient.png"
-    }
+    state: window.navigating ? "navigating" : "overview"
 
     Image {
         anchors.right: parent.right
@@ -82,7 +73,7 @@ Item {
         anchors.margins: 20
         z: 3
 
-        visible: !mapWindow.navigating
+        visible: !window.navigating
         source: "qrc:car-focus.png"
 
         MouseArea {
@@ -91,7 +82,7 @@ Item {
             anchors.fill: parent
 
             onClicked: {
-                mapWindow.navigating = true
+                window.navigating = true
             }
         }
 
@@ -115,6 +106,11 @@ Item {
             }
 
             PluginParameter {
+                name: "mapboxgl.mapping.use_fbo"
+                value: false
+            }
+
+            PluginParameter {
                 name: "mapboxgl.access_token"
                 value: "pk.eyJ1IjoidG1wc2FudG9zIiwiYSI6ImNqMWVzZWthbDAwMGIyd3M3ZDR0aXl3cnkifQ.FNxMeWCZgmujeiHjl44G9Q"
             }
@@ -128,7 +124,7 @@ Item {
         activeMapType: {
             var style;
 
-            if (mapWindow.navigating) {
+            if (window.navigating) {
                 style = night ? supportedMapTypes[1] : supportedMapTypes[0];
             } else {
                 style = night ? supportedMapTypes[3] : supportedMapTypes[2];
@@ -137,13 +133,13 @@ Item {
             return style;
         }
 
-        center: mapWindow.navigating ? ruler.currentPosition : map.center
-        zoomLevel: 12.25
+        center: window.navigating ? ruler.currentPosition : map.center
         minimumZoomLevel: 0
         maximumZoomLevel: 20
-        tilt: 60
 
         copyrightsVisible: false
+
+        // Traffic layers
 
         MapParameter {
             type: "layout"
@@ -432,6 +428,8 @@ Item {
             property var visibility: mapWindow.traffic ? "visible" : "none"
         }
 
+        // 3D buildings
+
         MapParameter {
             type: "layer"
 
@@ -463,17 +461,17 @@ Item {
             anchors.fill: parent
 
             onWheel: {
-                mapWindow.navigating = false
+                window.navigating = false
                 wheel.accepted = false
             }
         }
 
         gesture.onPanStarted: {
-            mapWindow.navigating = false
+            window.navigating = false
         }
 
         gesture.onPinchStarted: {
-            mapWindow.navigating = false
+            window.navigating = false
         }
 
         RotationAnimation on bearing {
@@ -482,7 +480,7 @@ Item {
             duration: 250
             alwaysRunToEnd: false
             direction: RotationAnimation.Shortest
-            running: mapWindow.navigating
+            running: window.navigating
         }
 
         Location {
@@ -491,7 +489,7 @@ Item {
         }
 
         onCenterChanged: {
-            if (previousLocation.coordinate == center || !mapWindow.navigating)
+            if (previousLocation.coordinate == center || !window.navigating)
                 return;
 
             bearingAnimation.to = previousLocation.coordinate.azimuthTo(center);
